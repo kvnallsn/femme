@@ -1,28 +1,21 @@
 //! Print logs as ndjson.
 
+use crate::Femme;
 use js_sys::Object;
-use log::{kv, Level, LevelFilter, Log, Metadata, Record};
+use log::{kv, Level, Log, Metadata, Record};
 use wasm_bindgen::prelude::*;
 
 use std::collections::HashMap;
 
-/// Start logging.
-pub(crate) fn start(level: LevelFilter) {
-    let logger = Box::new(Logger {});
-    log::set_boxed_logger(logger).expect("Could not start logging");
-    log::set_max_level(level);
-}
-
-#[derive(Debug)]
-pub(crate) struct Logger {}
-
-impl Log for Logger {
+impl Log for Femme {
     fn enabled(&self, metadata: &Metadata<'_>) -> bool {
         metadata.level() <= log::max_level()
     }
 
     fn log(&self, record: &Record<'_>) {
-        if self.enabled(record.metadata()) {
+        let level = self.module_level(record);
+
+        if record.level() <= *level {
             let args = format!("{}", record.args()).into();
             let line = format_line(&record).into();
 
